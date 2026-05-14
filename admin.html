@@ -1,97 +1,114 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>日记管理后台</title>
-<style>
-body{background:#f5f7fa;padding:20px;font-family:Arial,sans-serif;}
-.box{max-width:700px;margin:0 auto;background:#fff;padding:25px;border-radius:12px;}
-input,textarea,button{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:6px;font-size:16px;}
-button{background:#2b85e4;color:#fff;border:none;cursor:pointer;}
-.del{background:#ee5555;}
-#adminPanel{display:none;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日记管理后台</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"微软雅黑",sans-serif;}
+        body{background:#f0f4f8;padding:20px;}
+        .box{max-width:700px;margin:0 auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 2px 10px #ddd;}
+        h2{text-align:center;margin-bottom:20px;color:#222;}
+        input,textarea,button{width:100%;padding:12px;margin:8px 0;border:1px #ddd solid;border-radius:6px;font-size:16px;}
+        textarea{min-height:220px;resize:vertical;}
+        button{background:#2b85e4;color:#fff;border:none;cursor:pointer;}
+        .hidden{display:none;}
+        .item{padding:15px;border-bottom:1px #eee solid;margin-top:10px;}
+        .del{background:#ee5555;}
+        .gray{background:#888;}
+    </style>
 </head>
 <body>
-<div class="box">
-<h2>管理员登录</h2>
-<input type="password" id="pwd" placeholder="输入密码">
-<button onclick="login()">登录</button>
-
-<div id="adminPanel">
-<h3>写新日记</h3>
-<input type="text" id="dDate" placeholder="例如：2026年5月15日">
-<textarea id="dContent" rows="6" placeholder="写下日记内容"></textarea>
-<button onclick="saveDiary()">保存日记</button>
-<h3>已有日记</h3>
-<div id="list"></div>
-</div>
-</div>
-
-<script>
-const PWD = "888888";
-
-function login(){
-    let val = document.getElementById("pwd").value;
-    if(val === PWD){
-        document.getElementById("adminPanel").style.display = "block";
-        let now = new Date();
-        let y = now.getFullYear();
-        let m = now.getMonth()+1;
-        let d = now.getDate();
-        document.getElementById("dDate").value = `${y}年${m}月${d}日`;
-        renderList();
-    }else{
-        alert("密码错误");
-    }
-}
-
-function getList(){
-    return JSON.parse(localStorage.getItem("myDiary") || "[]");
-}
-
-function saveList(arr){
-    localStorage.setItem("myDiary",JSON.stringify(arr));
-}
-
-function renderList(){
-    let arr = getList();
-    arr.sort((a,b)=>b.time-a.time);
-    let html = "";
-    arr.forEach((v,i)=>{
-        html += `
-        <div style="padding:12px 0;border-bottom:1px solid #eee;">
-            <div>${v.date}</div>
-            <div style="margin:6px 0;">${v.content}</div>
-            <button class="del" onclick="delDiary(${i})">删除</button>
+    <div class="box">
+        <div id="loginBox">
+            <h2>管理员登录</h2>
+            <input type="password" id="pwd" placeholder="输入管理员密码">
+            <button onclick="login()">登录进入后台</button>
         </div>
-        `;
-    });
-    document.getElementById("list").innerHTML = html;
-}
 
-function saveDiary(){
-    let date = document.getElementById("dDate").value.trim();
-    let content = document.getElementById("dContent").value.trim();
-    if(!date || !content){
-        alert("请填写日期和内容");
-        return;
-    }
-    let arr = getList();
-    arr.push({date,content,time:Date.now()});
-    saveList(arr);
-    alert("保存成功");
-    document.getElementById("dContent").value = "";
-    renderList();
-}
+        <div id="adminBox" class="hidden">
+            <h2>写今日日记</h2>
+            <input type="text" id="dDate" placeholder="日期 如：2026年5月14日">
+            <textarea id="dContent" placeholder="写下今天的日记..."></textarea>
+            <button onclick="save()">保存日记</button>
+            <button class="gray" onclick="logout()">退出登录</button>
 
-function delDiary(idx){
-    let arr = getList();
-    arr.splice(idx,1);
-    saveList(arr);
-    renderList();
-}
-</script>
+            <h3 style="margin:25px 0 10px;">已发布日记</h3>
+            <div id="list"></div>
+        </div>
+    </div>
+
+    <script>
+        const PASS = "221229"; // 管理员密码
+
+        function login(){
+            let p = document.getElementById("pwd").value;
+            if(p === PASS){
+                localStorage.setItem("isAdmin","ok");
+                document.getElementById("loginBox").classList.add("hidden");
+                document.getElementById("adminBox").classList.remove("hidden");
+                let now = new Date();
+                let dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+                document.getElementById("dDate").value = dateStr;
+                loadList();
+            }else{
+                alert("密码错误，无法进入");
+            }
+        }
+
+        function logout(){
+            localStorage.removeItem("isAdmin");
+            location.reload();
+        }
+
+        function save(){
+            let date = document.getElementById("dDate").value;
+            let content = document.getElementById("dContent").value.trim();
+            if(!date || !content){
+                alert("请填写日期和日记内容");
+                return;
+            }
+            let arr = JSON.parse(localStorage.getItem("myDiary") || "[]");
+            arr.push({date,content,time:new Date().getTime()});
+            localStorage.setItem("myDiary",JSON.stringify(arr));
+            alert("保存成功！前台可以看到了");
+            document.getElementById("dContent").value = "";
+            loadList();
+        }
+
+        function loadList(){
+            let arr = JSON.parse(localStorage.getItem("myDiary") || "[]");
+            arr.sort((a,b)=>b.time - a.time);
+            let html = "";
+            arr.forEach((item,i)=>{
+                html += `
+                    <div class="item">
+                        <div>${item.date}</div>
+                        <div style="margin:6px 0;white-space:pre-wrap;">${item.content}</div>
+                        <button class="del" onclick="del(${i})">删除</button>
+                    </div>
+                `;
+            });
+            document.getElementById("list").innerHTML = html;
+        }
+
+        function del(i){
+            let arr = JSON.parse(localStorage.getItem("myDiary") || "[]");
+            arr.splice(i,1);
+            localStorage.setItem("myDiary",JSON.stringify(arr));
+            loadList();
+        }
+
+        window.onload = function(){
+            if(localStorage.getItem("isAdmin")==="ok"){
+                document.getElementById("loginBox").classList.add("hidden");
+                document.getElementById("adminBox").classList.remove("hidden");
+                let now = new Date();
+                let dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+                document.getElementById("dDate").value = dateStr;
+                loadList();
+            }
+        }
+    </script>
 </body>
 </html>
