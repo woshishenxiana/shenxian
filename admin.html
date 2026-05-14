@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人日记空间</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"微软雅黑",sans-serif;}
+        body{background:#f0f4f8;padding:20px;}
+        .wrap{max-width:700px;margin:0 auto;}
+        h1{text-align:center;color:#222;margin:30px 0;}
+        .diary-item{background:#fff;padding:20px;border-radius:10px;margin-bottom:16px;box-shadow:0 1px 5px #ddd;}
+        .date{color:#666;font-weight:bold;margin-bottom:8px;}
+        .content{color:#333;line-height:1.8;white-space:pre-wrap;}
+        .admin-tip{text-align:center;margin-top:50px;color:#999;font-size:14px;}
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>我的日记</h1>
+        <div id="list"></div>
+        <div class="admin-tip">仅管理员可编辑日记</div>
+    </div>
+
+    <script>
+        let list = JSON.parse(localStorage.getItem("myDiary") || "[]");
+        list.sort((a,b)=>new Date(b.time) - new Date(a.time));
+        let html = "";
+        list.forEach(item=>{
+            html += `
+                <div class="diary-item">
+                    <div class="date">${item.date}</div>
+                    <div class="content">${item.content}</div>
+                </div>
+            `;
+        });
+        document.getElementById("list").innerHTML = html;
+    </script>
+</body>
+</html>
