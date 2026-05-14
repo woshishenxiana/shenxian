@@ -1,44 +1,38 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的日记</title>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:"微软雅黑",sans-serif;}
-        body{background:#f0f4f8;padding:20px;}
-        .container{max-width:700px;margin:0 auto;}
-        h1{text-align:center;margin:30px 0;color:#222;}
-        .note{background:#fff;border-radius:8px;padding:15px;margin-bottom:15px;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
-        .date{font-size:14px;color:#666;margin-bottom:8px;}
-        .content{font-size:16px;line-height:1.6;color:#333;}
-        .tip{text-align:center;margin-top:30px;color:#999;font-size:14px;}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>我的日记</title>
+<style>
+body{background:#f7f8fa;padding:20px;font-family:Arial,sans-serif}
+.box{max-width:700px;margin:0 auto;background:#fff;padding:20px;border-radius:12px}
+.item{padding:15px 0;border-bottom:1px solid #eee}
+.date{color:#888;font-size:14px}
+.content{margin-top:8px;line-height:1.6}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>我的日记</h1>
-        <div id="notesList"></div>
-        <div class="tip">仅管理员可编辑日记</div>
-    </div>
+<div class="box">
+<h1>我的日记</h1>
+<div id="list"></div>
+</div>
 
-    <script>
-        function loadNotes() {
-            const notes = JSON.parse(localStorage.getItem("myDiary") || "[]");
-            const list = document.getElementById("notesList");
-            list.innerHTML = "";
-            notes.sort((a,b) => b.time - a.time);
-            notes.forEach(note => {
-                const div = document.createElement("div");
-                div.className = "note";
-                div.innerHTML = `
-                    <div class="date">${note.date}</div>
-                    <div class="content">${note.content}</div>
-                `;
-                list.appendChild(div);
-            });
-        }
-        loadNotes();
-    </script>
+<script>
+const GIST_ID = "7c4a815ec1d94a41e22b4c0e7d4f8490";
+async function load() {
+  let res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
+  let data = await res.json();
+  let content = data.files['diary.json'].content;
+  let list = JSON.parse(content || "[]");
+  list.sort((a,b)=>b.time - a.time);
+  let html = "";
+  list.forEach(i=>{
+    html+=`<div class="item"><div class="date">${i.date}</div><div class="content">${i.content}</div></div>`;
+  });
+  document.getElementById("list").innerHTML = html;
+}
+load();
+</script>
 </body>
 </html>
