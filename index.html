@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>我的日记</title>
 <style>
-body{background:#f7f8fa;padding:20px;font-family:Arial,sans-serif}
-.box{max-width:700px;margin:0 auto;background:#fff;padding:20px;border-radius:12px}
-.item{padding:15px 0;border-bottom:1px solid #eee}
-.date{color:#888;font-size:14px}
-.content{margin-top:8px;line-height:1.6}
+body{background:#f5f7fa;padding:20px;font-family:system-ui}
+.box{max-width:700px;margin:0 auto;background:#fff;border-radius:12px;padding:20px}
+.item{border-bottom:1px solid #eee;padding:15px 0}
+.date{color:#777;font-size:14px}
+.content{margin-top:8px;line-height:1.7}
 </style>
 </head>
 <body>
@@ -19,20 +19,20 @@ body{background:#f7f8fa;padding:20px;font-family:Arial,sans-serif}
 </div>
 
 <script>
-const GIST_ID = "7c4a815ec1d94a41e22b4c0e7d4f8490";
-async function load() {
-  let res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-  let data = await res.json();
-  let content = data.files['diary.json'].content;
-  let list = JSON.parse(content || "[]");
-  list.sort((a,b)=>b.time - a.time);
-  let html = "";
-  list.forEach(i=>{
-    html+=`<div class="item"><div class="date">${i.date}</div><div class="content">${i.content}</div></div>`;
-  });
-  document.getElementById("list").innerHTML = html;
+async function getDiary(){
+  let res=await fetch("https://jsonblob.com/api/jsonBlob/1159260576996478976");
+  return await res.json();
 }
-load();
+async function show(){
+  let arr=await getDiary();
+  arr.sort((a,b)=>b.time-a.time);
+  let html="";
+  arr.forEach(v=>{
+    html+=`<div class="item"><div class="date">${v.date}</div><div class="content">${v.content}</div></div>`;
+  });
+  document.getElementById("list").innerHTML=html;
+}
+show();
 </script>
 </body>
 </html>

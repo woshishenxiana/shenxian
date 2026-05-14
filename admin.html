@@ -1,89 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>管理后台</title>
+<title>日记后台</title>
 <style>
-body{background:#f7f8fa;padding:20px;font-family:Arial,sans-serif}
-.box{max-width:700px;margin:0 auto;background:#fff;padding:25px;border-radius:12px}
+body{background:#f5f7fa;padding:20px;font-family:system-ui}
+.box{max-width:700px;margin:0 auto;background:#fff;border-radius:12px;padding:20px}
 input,textarea,button{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:6px;font-size:16px}
-button{background:#4285f4;color:#fff;border:none;cursor:pointer}
-.del{background:#ff4757}
+button{background:#2b85e4;color:#fff;border:none}
+.del{background:#ee5555}
+#admin{display:none}
 </style>
 </head>
 <body>
 <div class="box">
-<h2>登录</h2>
-<input type="password" id="pwd" placeholder="密码：888888">
+<h2>管理员登录</h2>
+<input type="password" id="pwd" placeholder="输入密码">
 <button onclick="login()">登录</button>
-<div id="admin" style="display:none;margin-top:20px">
-<h3>写日记</h3>
-<input type="text" id="date" placeholder="日期">
-<textarea id="content" rows="6" placeholder="内容"></textarea>
-<button onclick="save()">保存</button>
+
+<div id="admin">
+<h3>写新日记</h3>
+<input type="text" id="dDate" placeholder="日期">
+<textarea id="dContent" rows="6" placeholder="日记内容"></textarea>
+<button onclick="save()">保存日记</button>
+<h3>已有日记</h3>
 <div id="list"></div>
 </div>
 </div>
 
 <script>
-const PASS = "221229";
-const GIST_ID = "7c4a815ec1d94a41e22b4c0e7d4f8490";
-const TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-
-let list = [];
+const PASS="221229";
+const URL="https://jsonblob.com/api/jsonBlob/1159260576996478976";
 
 async function login(){
-  if(document.getElementById("pwd").value==PASS){
+  if(document.getElementById("pwd").value===PASS){
     document.getElementById("admin").style.display="block";
-    await load();
-    showList();
-  }else alert("密码错");
+    let now=new Date();
+    document.getElementById("dDate").value=`${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+    loadList();
+  }else alert("密码错误");
 }
 
-async function load(){
-  let res = await fetch(`https://api.github.com/gists/${GIST_ID}`);
-  let data = await res.json();
-  list = JSON.parse(data.files['diary.json'].content || "[]");
+async function getArr(){
+  let res=await fetch(URL);
+  return await res.json();
 }
 
-function showList(){
-  let h = "";
-  list.forEach((i,n)=>{
-    h+=`<div style="padding:12px 0;border-bottom:1px solid #eee">
-    <div>${i.date}</div>
-    <div style="margin:6px 0">${i.content}</div>
-    <button class="del" onclick="del(${n})">删除</button>
+async function loadList(){
+  let arr=await getArr();
+  arr.sort((a,b)=>b.time-a.time);
+  let html="";
+  arr.forEach((v,i)=>{
+    html+=`<div style="padding:12px 0;border-bottom:1px solid #eee">
+      <div>${v.date}</div>
+      <div style="margin:6px 0">${v.content}</div>
+      <button class="del" onclick="del(${i})">删除</button>
     </div>`;
   });
-  document.getElementById("list").innerHTML=h;
+  document.getElementById("list").innerHTML=html;
 }
 
 async function save(){
-  let d = document.getElementById("date").value;
-  let c = document.getElementById("content").value;
-  if(!d||!c){alert("填写完整");return}
-  list.push({date:d,content:c,time:Date.now()});
-  await saveToCloud();
-  alert("保存成功！全设备同步");
-  document.getElementById("content").value="";
-  showList();
+  let date=document.getElementById("dDate").value.trim();
+  let content=document.getElementById("dContent").value.trim();
+  if(!date||!content){alert("请填日期和内容");return}
+  let arr=await getArr();
+  arr.push({date,content,time:Date.now()});
+  await fetch(URL,{method:"PUT",body:JSON.stringify(arr)});
+  alert("保存成功！所有手机电脑同步");
+  document.getElementById("dContent").value="";
+  loadList();
 }
 
-async function del(n){
-  list.splice(n,1);
-  await saveToCloud();
-  showList();
-}
-
-async function saveToCloud(){
-  await fetch(`https://api.github.com/gists/${GIST_ID}`,{
-    method:"PATCH",
-    headers:{Authorization:"token "+TOKEN},
-    body:JSON.stringify({
-      files:{"diary.json":{"content":JSON.stringify(list,null,2)}}
-    })
-  });
+async function del(idx){
+  let arr=await getArr();
+  arr.splice(idx,1);
+  await fetch(URL,{method:"PUT",body:JSON.stringify(arr)});
+  loadList();
 }
 </script>
 </body>
