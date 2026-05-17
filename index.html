@@ -18,22 +18,15 @@ h1{text-align:center;}
 <h1>我的日记</h1>
 <div id="list"></div>
 </div>
+
 <script>
-const apiUrl = "https://api.npoint.io/9f670134773867598765";
-async function getDiary(){
-  let res = await fetch(apiUrl);
-  return await res.json() || [];
-}
-async function render(){
-  let list = await getDiary();
-  list.sort((a,b)=>b.time-a.time);
-  let html = "";
-  list.forEach(v=>{
+let data = JSON.parse(localStorage.getItem("myDiary") || "[]");
+data.sort((a,b)=>b.time-a.time);
+let html = "";
+data.forEach(v=>{
     html += `<div class="item"><div class="date">${v.date}</div><div class="content">${v.content}</div></div>`;
-  })
-  document.getElementById("list").innerHTML = html;
-}
-render();
+});
+document.getElementById("list").innerHTML = html;
 </script>
 </body>
 </html>
