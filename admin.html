@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>日记后台</title>
+<title>日记管理后台</title>
 <style>
 body{background:#f5f7fa;padding:20px;font-family:Arial,sans-serif;}
 .box{max-width:700px;margin:0 auto;background:#fff;padding:25px;border-radius:12px;}
@@ -16,77 +16,81 @@ button{background:#2b85e4;color:#fff;border:none;cursor:pointer;}
 <body>
 <div class="box">
 <h2>管理员登录</h2>
-<input type="password" id="pwd" placeholder="密码888888">
+<input type="password" id="pwd" placeholder="输入密码">
 <button onclick="login()">登录</button>
 
 <div id="adminPanel">
-<h3>撰写日记</h3>
-<input type="text" id="dDate" placeholder="填写日期">
-<textarea id="dContent" rows="6" placeholder="填写内容"></textarea>
-<button onclick="save()">保存日记</button>
-<h3>全部日记</h3>
+<h3>写新日记</h3>
+<input type="text" id="dDate" placeholder="例如：2026年5月15日">
+<textarea id="dContent" rows="6" placeholder="写下日记内容"></textarea>
+<button onclick="saveDiary()">保存日记</button>
+<h3>已有日记</h3>
 <div id="list"></div>
 </div>
 </div>
 
 <script>
-const pwd = "888888";
-const pushUrl = "https://www.npoint.io/docs/9f670134773867598765";
-const getUrl = "https://api.npoint.io/9f670134773867598765";
+const PWD = "221229";
 
 function login(){
-  if(document.getElementById("pwd").value === pwd){
-    document.getElementById("adminPanel").style.display="block";
-    let now=new Date();
-    document.getElementById("dDate").value=`${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
-    loadData();
-  }else alert("密码错误");
+    let val = document.getElementById("pwd").value;
+    if(val === PWD){
+        document.getElementById("adminPanel").style.display = "block";
+        let now = new Date();
+        let y = now.getFullYear();
+        let m = now.getMonth()+1;
+        let d = now.getDate();
+        document.getElementById("dDate").value = `${y}年${m}月${d}日`;
+        renderList();
+    }else{
+        alert("密码错误");
+    }
 }
 
-async function getData(){
-  let res=await fetch(getUrl);
-  return await res.json()||[];
+function getList(){
+    return JSON.parse(localStorage.getItem("myDiary") || "[]");
 }
 
-async function saveData(arr){
-  await fetch(pushUrl,{
-    method:"PUT",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(arr)
-  })
+function saveList(arr){
+    localStorage.setItem("myDiary",JSON.stringify(arr));
 }
 
-async function loadData(){
-  let arr=await getData();
-  arr.sort((a,b)=>b.time-a.time);
-  let html="";
-  arr.forEach((v,i)=>{
-    html+=`<div style="padding:12px 0;border-bottom:1px solid #eee">
-      <div>${v.date}</div>
-      <div style="margin:6px 0">${v.content}</div>
-      <button class="del" onclick="del(${i})">删除</button>
-    </div>`
-  })
-  document.getElementById("list").innerHTML=html;
+function renderList(){
+    let arr = getList();
+    arr.sort((a,b)=>b.time-a.time);
+    let html = "";
+    arr.forEach((v,i)=>{
+        html += `
+        <div style="padding:12px 0;border-bottom:1px solid #eee;">
+            <div>${v.date}</div>
+            <div style="margin:6px 0;">${v.content}</div>
+            <button class="del" onclick="delDiary(${i})">删除</button>
+        </div>
+        `;
+    });
+    document.getElementById("list").innerHTML = html;
 }
 
-async function save(){
-  let date=document.getElementById("dDate").value.trim();
-  let content=document.getElementById("dContent").value.trim();
-  if(!date||!content)return alert("请填写完整内容");
-  let arr=await getData();
-  arr.push({date,content,time:Date.now()});
-  await saveData(arr);
-  alert("保存成功，全设备同步！");
-  document.getElementById("dContent").value="";
-  loadData();
+function saveDiary(){
+    let date = document.getElementById("dDate").value.trim();
+    let content = document.getElementById("dContent").value.trim();
+    if(!date || !content){
+        alert("请填写日期和内容");
+        return;
+    }
+    let arr = getList();
+    arr.push({date,content,time:Date.now()});
+    saveList(arr);
+    alert("保存成功");
+    document.getElementById("dContent").value = "";
+    renderList();
 }
 
-async function del(idx){
-  let arr=await getData();
-  arr.splice(idx,1);
-  await saveData(arr);
-  loadData();
+function delDiary(idx){
+    let arr = getList();
+    arr.splice(idx,1);
+    saveList(arr);
+    renderList();
 }
 </script>
 </body>
